@@ -1,0 +1,9 @@
+[
+    {
+        "profileName": "Test Profile",
+        "account": {
+            "email": "dothedance@fngg.io",
+            "password": "Pa$$W0Rd123"
+        }
+    }
+]

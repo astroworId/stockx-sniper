@@ -1,0 +1,7 @@
+{
+  "name": "stockx-sniper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "cactus jack <github@cactusjack.io>",
+  "license": "MIT"
+}
