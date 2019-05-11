@@ -114,7 +114,7 @@ function getProduct(task) {
             }
             for (let i = 0; i < sizes.length; i++) {
                 if (sizes[i] === null) {
-                    sizes.splice(i, 1)
+                    sizes.splice(i)
                 }
             }
             for (let i = 0; i < keys.length; i++) {
@@ -150,7 +150,7 @@ function getProduct(task) {
                                 }
                                 for (let i = 0; i < b.ProductActivity.length; i++) {
                                     if (asks[i] === null) {
-                                        asks.splice(i, 1)
+                                        asks.splice(i)
                                     }
                                 }
                                 let loginTask = {
