@@ -419,6 +419,7 @@ function notify(notifyTask) {
         username: 'StockX Sniper',
         attachments: [
             {
+                author_name: 'StockX Sniper',
                 title: notifyTask.checkoutStatus,
                 color: notifyTask.webhookColor,
                 title_link: notifyTask.productLink,
@@ -431,7 +432,7 @@ function notify(notifyTask) {
                 { title: 'Account', value: '||' + notifyTask.profile.account.email + '||', short: true},
                 { title: 'Checkout Time', value: notifyTask.checkoutTime + 's'}],
                 thumb_url: notifyTask.productImage,
-                footer: 'Stockx Sniper | @stroworld | @IncorrectCVV' ,
+                footer: 'StockX Sniper | @stroworld | @IncorrectCVV' ,
                 ts: Math.floor(Date.now() / 1000),
                 footer_icon: 'https://hypebeast.com/wp-content/blogs.dir/6/files/2018/08/travis-scott-astroworld-tour-dates-tickets-1.jpg'
             }
