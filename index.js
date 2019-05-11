@@ -55,7 +55,7 @@ function main() {
 function getProduct(task) {
     let startTime = new Date().getTime()
     log('Waiting for product...', 'log')
-    request({
+    const opts = {
         url: `https://stockx.com/api/products/${task.productLink.split('.com/')[1]}?includes=market&currency=USD`,
         method: 'GET',
         headers: {
@@ -70,7 +70,8 @@ function getProduct(task) {
         gzip: true,
         json: true,
         proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
-    }, function (e, r, b) {
+    };
+    request(opts, (e, r, b) => {
         if (e) {
             log('Request error getting product information...', 'error')
             console.log(e)
@@ -91,6 +92,7 @@ function getProduct(task) {
             }
             let asks = []
             let sizes = []
+            let multisizes = []
             let keys = Object.keys(b.Product.children)
             let profile = ''
             let size = ''
@@ -104,61 +106,78 @@ function getProduct(task) {
                     sizes.push(b.Product.children[keys[i]].market.lowestAskSize)
                 }
                 size = sizes.random()
+            } else if (task.Size.length > 4) {
+                multisizes = task.Size.split(',')
+                size = multisizes.random()
             } else {
                 size = task.Size 
+            }
+            for (let i = 0; i < sizes.length; i++) {
+                if (sizes[i] === null) {
+                    sizes.splice(i)
+                }
             }
             for (let i = 0; i < keys.length; i++) {
                 if (b.Product.children[keys[i]].shoeSize === size) {
                     let skuUuid = b.Product.children[keys[i]].market.skuUuid
-                    request({
-                        url: `https://stockx.com/api/products/${skuUuid}/activity?state=400&currency=USD&limit=${task.Quantity}&page=1&sort=amount&order=ASC&timestamp=${parseInt(Date.now()/1000)}`,
-                        method: 'GET',
-                        headers: {
-                            'appversion': '0.1',
-                            'appos': 'web',
-                            'x-requested-with': 'XMLHttpRequest',
-                            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-                            'accept': '*/*',
-                            'accept-encoding': 'gzip, deflate, br',
-                            'accept-language': 'en-US,en;q=0.9'
-                        },
-                        gzip: true,
-                        json: true,
-                        proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
-                    }, function (e, r, b) {
-                        if (e) {
-                            log('Request error getting ask details...', 'error')
-                            console.log(e)
-                            return setTimeout(getProduct, config.retryDelay, task)
-                        }
-                        if (r.statusCode === 200) {
-                            for (let i = 0; i < b.ProductActivity.length; i++) {
-                                asks.push(b.ProductActivity[i].localAmount)
+                    let lowestAsk = b.Product.children[keys[i]].market.lowestAsk
+                    if (lowestAsk < priceRange) {
+                        request({
+                            url: `https://stockx.com/api/products/${skuUuid}/activity?state=400&currency=USD&limit=${task.Quantity}&page=1&sort=amount&order=ASC&timestamp=${parseInt(Date.now()/1000)}`,
+                            method: 'GET',
+                            headers: {
+                                'appversion': '0.1',
+                                'appos': 'web',
+                                'x-requested-with': 'XMLHttpRequest',
+                                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
+                                'accept': '*/*',
+                                'accept-encoding': 'gzip, deflate, br',
+                                'accept-language': 'en-US,en;q=0.9'
+                            },
+                            gzip: true,
+                            json: true,
+                            proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
+                        }, function (e, r, b) {
+                            if (e) {
+                                log('Request error getting ask details...', 'error')
+                                console.log(e)
+                                return setTimeout(getProduct, config.retryDelay, task)
                             }
-                            let loginTask = {
-                                task:task,
-                                startTime:startTime,
-                                productName:productName,
-                                productImage:productImage,
-                                productLink:productLink,
-                                productUuid:productUuid,
-                                profile:profile,
-                                size:size,
-                                skuUuid:skuUuid,
-                                asks:asks
-                            }
-                            if (asks[0] < priceRange) {
+                            if (r.statusCode === 200) {
+                                for (let i = 0; i < b.ProductActivity.length; i++) {
+                                    asks.push(b.ProductActivity[i].localAmount)
+                                    
+                                }
+                                for (let i = 0; i < b.ProductActivity.length; i++) {
+                                    if (asks[i] === null) {
+                                        asks.splice(i)
+                                    }
+                                }
+                                let loginTask = {
+                                    task:task,
+                                    startTime:startTime,
+                                    productName:productName,
+                                    productImage:productImage,
+                                    productLink:productLink,
+                                    productUuid:productUuid,
+                                    profile:profile,
+                                    size:size,
+                                    skuUuid:skuUuid,
+                                    asks:asks
+                                }
                                 login(loginTask)
                             } else {
-                                log('Out of price range...', 'log')
-                                return setTimeout(getProduct, config.retryDelay, task)
-                            }
-                        } else {
-                                log('Error getting ask details... ' + '[' + r.statusCode + ']', 'error')
-                                console.log(r.body)
-                                return setTimeout(getProduct, config.retryDelay, task)
-                            }
-                        });
+                                    log('Error getting ask details... ' + '[' + r.statusCode + ']', 'error')
+                                    console.log(r.body)
+                                    return setTimeout(getProduct, config.retryDelay, task)
+                                }
+                            });
+                    } else {
+                        log('Out of price range...', 'log')
+                        return setTimeout(getProduct, config.retryDelay, task)
+                    }
+                    
+                    
                 }
             }
         } else {
@@ -329,6 +348,7 @@ function checkout(checkoutTask) {
                     json: true,
                     proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
                 }, function (e, r, b) {
+                    console.log(r.statusCode)
                     console.log(b)
                     if (e) {
                         log('Request error checking out...', 'error')
@@ -339,7 +359,7 @@ function checkout(checkoutTask) {
                         log('Your account is clipped...', 'error') // account banned/contact stockx for help
                         console.log(b)
                     } 
-                    if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('complete')) {
+                    if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('Complete')) {
                         console.log(b)
                         log('Checked out...', 'success')
                         let orderNumber = b.PortfolioItem.orderNumber
@@ -362,7 +382,7 @@ function checkout(checkoutTask) {
                     } else if (b.Error && JSON.stringify(b.Error.description).includes('declined')) {
                         console.log(b)
                         log('Payment declined...', 'error')
-                        let orderNumber = 'Unavailable' // not sure if this is possible
+                        let orderNumber = 'Unavailable'
                         let checkoutTime = (new Date().getTime() - checkoutTask.startTime)/1000
                         let webhookColor = '#FE2929'
                         let checkoutStatus = 'Declined: ' + checkoutTask.productName

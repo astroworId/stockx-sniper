@@ -6,6 +6,7 @@ Bot for [StockX](http://stockx.com/) made by [cactus jack](https://twitter.com/a
 
 - Runnning the bot will pick up the lowest ask for the size you input and if it is under your max price, it will attempt to checkout.  If it is over your max price, the bot will continue to monitor until there is another ask that is lower than your max price.  If you set quantity to a number other than 1, the bot will get the next lowest ask, and attempt to checkout both.
 - Setting your size to R, will choose a random size and attempt to check it out.
+- Multisizing allows you to set a size range, and the bot will just choose a random size from the range, it is formatted like this: size,size,size (example: 9,9.5,10), would pick any size within 9-10.
 - Adding multiple tasks to your tasks.json will run multiple tasks for your desired size(s)/product(s), this can be done by replicating the default task in the tasks.json file and filling all the necessary fields.
 - The webhook notification will include a product link, product image, item name, size, purchase price, profile name, order number, account email, and checkout time.  Profile name, order number, and account email will have  spoiler tasks, see webhook example below.  You can use either a slack or discord webhook (see more information below).
 
