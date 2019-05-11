@@ -29,7 +29,7 @@ function formatWH(url) {
 Array.prototype.random = function() {
     return this[Math.floor(Math.random() * this.length)];
 }
-global.formatProxy = (proxy) => {
+global.formatProxy = (proxy) => { // ty hunter
     if (proxy && ['localhost', ''].indexOf(proxy) < 0) {
         proxy = proxy.replace(' ', '_');
         const proxySplit = proxy.split(':');
@@ -41,7 +41,7 @@ global.formatProxy = (proxy) => {
         return undefined;
 }
 function main() {
-    const proxyInput = fs.readFileSync('proxies.txt').toString().split('\n');
+    const proxyInput = fs.readFileSync('proxies.txt').toString().split('\n'); // ty hunter
     for (let p = 0; p < proxyInput.length; p++) {
         proxyInput[p] = proxyInput[p].replace('\r', '').replace('\n', '');
         if (proxyInput[p] != '')
