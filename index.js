@@ -339,7 +339,7 @@ function checkout(checkoutTask) {
                         log('Your account is clipped...', 'error') // account banned/contact stockx for help
                         console.log(b)
                     } 
-                    if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('complete')) {
+                    if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('Complete')) {
                         console.log(b)
                         log('Checked out...', 'success')
                         let orderNumber = b.PortfolioItem.orderNumber
