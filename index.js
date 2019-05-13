@@ -87,12 +87,25 @@ function getProduct(task) {
             for (let i = 0; i < keys.length; i++) {
                 sizes.push(b.Product.children[keys[i]].market.lowestAskSize)
             }
+            for (let i = 0; i < sizes.length; i++) {
+                if (sizes[i] === null) {
+                    sizes.splice(i)
+                }
+            }
             if (task.Size === 'R') {
                 size = sizes.random()
             } else if (task.Size.length > 4) {
                 multisizes = task.Size.split(',')
+                for (let i = 0; i < multisizes.length; i++) {
+                    if (!sizes.includes(multisizes[i])) {
+                        multisizes.splice(i)
+                    }
+                }
+                if (multisizes.length === 0) {
+                    log('Size unavailable... ' + `[${tasks.indexOf(task)}] [Size: ${task.Size}]`, 'error')
+                    return;
+                }
                 size = multisizes.random()
-
             } else if (sizes.includes(task.Size)) {
                 size = task.Size 
             } else {
@@ -100,12 +113,7 @@ function getProduct(task) {
                 log('Size unavailable... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
                 return;
             }
-            for (let i = 0; i < sizes.length; i++) {
-                if (sizes[i] === null) {
-                    sizes.splice(i)
-                }
-            }
-            log('Found product: ' + productName + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
+            log('Found product: ' + productName + ` [${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
             let productImage = b.Product.media.imageUrl
             let productLink = `https://stockx.com/${b.Product.urlKey}`
             let productUuid = b.Product.market.productUuid
@@ -114,6 +122,9 @@ function getProduct(task) {
                 priceRange = 99999999
             } else if (parseInt(task.maxPrice) > b.Product.retailPrice) {
                 priceRange = task.maxPrice
+            } else {
+                log('Invalid max price... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+                return;
             }
             let asks = []
             let profile = ''
