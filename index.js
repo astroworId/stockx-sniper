@@ -202,7 +202,7 @@ function getProduct(task) {
     });
 }
 function login(loginTask) {
-    log('Submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
+    log('Submitting login information... ' + `[${tasks.indexOf(loginTask.task)}] [Size: ${loginTask.size}]`, 'log')
     request({
         url: `https://stockx.com/api/login`,
         method: 'POST',
@@ -224,12 +224,12 @@ function login(loginTask) {
         proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
     }, function (e, r, b) {
         if (e) {
-            log('Request error submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+            log('Request error submitting login information... ' + `[${tasks.indexOf(loginTask.task)}] [Size: ${loginTask.size}]`, 'error')
             console.log(e)
             return setTimeout(login, config.retryDelay, loginTask)
         }
         if (r.statusCode === 200) {
-            log('Logged in... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
+            log('Logged in... ' + `[${tasks.indexOf(loginTask.task)}] [Size: ${loginTask.size}]`, 'success')
             let jwt_token = r.headers['jwt-authorization']
             let grails_user_token = {
                 Customer: {  
@@ -287,14 +287,14 @@ function login(loginTask) {
             }
             checkout(checkoutTask)
         } else  {
-            log('Error submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
+            log('Error submitting login information... ' + `[${tasks.indexOf(loginTask.task)}] [Size: ${loginTask.size}]` + ' [' + r.statusCode + ']', 'error')
             console.log(r.body)
             return setTimeout(login, config.retryDelay, loginTask)
         }
     });
 }
 function checkout(checkoutTask) {
-    log('Attempting ATC... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
+    log('Attempting ATC... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'log')
     for (let lowestAsk of checkoutTask.asks) {
         request({
             url: `https://gateway.stockx.com/api/v3/pricing/pricing?currency=USD`,
@@ -326,12 +326,12 @@ function checkout(checkoutTask) {
             proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
         }, function (e, r, b) {
             if (e) {
-                log('Request error adding to cart... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+                log('Request error adding to cart... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'error')
                 console.log(e)
                 return setTimeout(checkout, config.retryDelay, checkoutTask)
             }
             if (r.statusCode === 200) {
-                log('Added to cart...', 'success')
+                log('Added to cart... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'success')
                 let date = moment().add(30, 'days').utc().format();
                 request({
                     url: `https://gateway.stockx.com/api/v1/portfolio?a=bid`,
@@ -363,17 +363,17 @@ function checkout(checkoutTask) {
                     proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
                 }, function (e, r, b) {
                     if (e) {
-                        log('Request error checking out... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+                        log('Request error checking out... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'error')
                         console.log(e)
                         return setTimeout(checkout, config.retryDelay, checkoutTask)
                     }
                     if (r.statusCode === 400 && JSON.stringify(b.Error.description).includes('support@stockx.com')) {
-                        log('Your account is clipped... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error') // account banned/contact stockx for help
+                        log('Your account is clipped... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'error') // account banned/contact stockx for help
                         console.log(b)
                     } 
                     if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('Complete')) {
                         console.log(b)
-                        log(`Checked out: Size - ${checkoutTask.size}... ` + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
+                        log(`Checked out: Size - ${checkoutTask.size}... ` + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'success')
                         let orderNumber = b.PortfolioItem.orderNumber
                         let checkoutTime = (new Date().getTime() - checkoutTask.startTime)/1000
                         let webhookColor = '#00FF6D'
@@ -394,7 +394,7 @@ function checkout(checkoutTask) {
                         notify(notifyTask)
                     } else if (b.Error && JSON.stringify(b.Error.description).includes('declined')) {
                         console.log(b)
-                        log('Payment declined... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+                        log('Payment declined... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]`, 'error')
                         let orderNumber = 'Unavailable'
                         let checkoutTime = (new Date().getTime() - checkoutTask.startTime)/1000
                         let webhookColor = '#FE2929'
@@ -414,13 +414,13 @@ function checkout(checkoutTask) {
                         }
                         notify(notifyTask)
                     } else if (r.statusCode !== 400 && r.statusCode !== 200) {
-                        log('Error checking out... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
+                        log('Error checking out... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]` + ' [' + r.statusCode + ']', 'error')
                         console.log(r.body)
                         return setTimeout(checkout, config.retryDelay, checkoutTask)
                     }
                 });
             } else {
-                log('Error adding to cart... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
+                log('Error adding to cart... ' + `[${tasks.indexOf(checkoutTask.task)}] [Size: ${checkoutTask.size}]` + ' [' + r.statusCode + ']', 'error')
                 console.log(r.body)
                 return setTimeout(checkout, config.retryDelay, checkoutTask)
             }
@@ -428,7 +428,7 @@ function checkout(checkoutTask) {
     }
 }
 function notify(notifyTask) {
-    log('Sending webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
+    log('Sending webhook... ' + `[${tasks.indexOf(notifyTask.task)}] [Size: ${notifyTask.size}]`, 'log')
     const message = { 
         username: 'StockX Sniper',
         attachments: [
@@ -459,11 +459,11 @@ function notify(notifyTask) {
         body: message
     }, function (e) {
         if (e) {
-            log('Request error sending webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+            log('Request error sending webhook... ' + `[${tasks.indexOf(notifyTask.task)}] [Size: ${notifyTask.size}]`, 'error')
             console.log(e)
             return setTimeout(notify, config.retryDelay, notifyTask)
         }
-        log('Sent webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
+        log('Sent webhook... ' + `[${tasks.indexOf(notifyTask.task)}] [Size: ${notifyTask.size}]`, 'success')
     });
 }
 main()
