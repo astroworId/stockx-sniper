@@ -54,7 +54,7 @@ function main() {
 }
 function getProduct(task) {
     let startTime = new Date().getTime()
-    log('Waiting for product...', 'log')
+    log('Waiting for product... ' + `[${tasks.indexOf(task)}]`, 'log')
     const opts = {
         url: `https://stockx.com/api/products/${task.productLink.split('.com/')[1]}?includes=market&currency=USD`,
         method: 'GET',
@@ -73,14 +73,39 @@ function getProduct(task) {
     };
     request(opts, (e, r, b) => {
         if (e) {
-            log('Request error getting product information...', 'error')
+            log('Request error getting product information... ' + `[${tasks.indexOf(task)}]`, 'error')
             console.log(e)
             return setTimeout(getProduct, config.retryDelay, task)
         }
         if (r.statusCode === 200) {
-            log('Getting product details...', 'log')
+            log('Getting product details... ' + `[${tasks.indexOf(task)}]`, 'log')
             let productName = b.Product.title
-            log('Found product: ' + productName, 'success')
+            let size = ''
+            let sizes = []
+            let multisizes = []
+            let keys = Object.keys(b.Product.children)
+            for (let i = 0; i < keys.length; i++) {
+                sizes.push(b.Product.children[keys[i]].market.lowestAskSize)
+            }
+            if (task.Size === 'R') {
+                size = sizes.random()
+            } else if (task.Size.length > 4) {
+                multisizes = task.Size.split(',')
+                size = multisizes.random()
+
+            } else if (sizes.includes(task.Size)) {
+                size = task.Size 
+            } else {
+                size = task.Size
+                log('Size unavailable... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
+                return;
+            }
+            for (let i = 0; i < sizes.length; i++) {
+                if (sizes[i] === null) {
+                    sizes.splice(i)
+                }
+            }
+            log('Found product: ' + productName + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
             let productImage = b.Product.media.imageUrl
             let productLink = `https://stockx.com/${b.Product.urlKey}`
             let productUuid = b.Product.market.productUuid
@@ -91,30 +116,10 @@ function getProduct(task) {
                 priceRange = task.maxPrice
             }
             let asks = []
-            let sizes = []
-            let multisizes = []
-            let keys = Object.keys(b.Product.children)
             let profile = ''
-            let size = ''
             for (let prof of profiles) {
                 if (prof.profileName === task.Profile) {
                     profile = prof
-                }
-            }
-            if (task.Size === 'R') {
-                for (let i = 0; i < keys.length; i++) {
-                    sizes.push(b.Product.children[keys[i]].market.lowestAskSize)
-                }
-                size = sizes.random()
-            } else if (task.Size.length > 4) {
-                multisizes = task.Size.split(',')
-                size = multisizes.random()
-            } else {
-                size = task.Size 
-            }
-            for (let i = 0; i < sizes.length; i++) {
-                if (sizes[i] === null) {
-                    sizes.splice(i)
                 }
             }
             for (let i = 0; i < keys.length; i++) {
@@ -139,7 +144,7 @@ function getProduct(task) {
                             proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
                         }, function (e, r, b) {
                             if (e) {
-                                log('Request error getting ask details...', 'error')
+                                log('Request error getting ask details... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
                                 console.log(e)
                                 return setTimeout(getProduct, config.retryDelay, task)
                             }
@@ -167,28 +172,26 @@ function getProduct(task) {
                                 }
                                 login(loginTask)
                             } else {
-                                    log('Error getting ask details... ' + '[' + r.statusCode + ']', 'error')
+                                    log('Error getting ask details... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
                                     console.log(r.body)
                                     return setTimeout(getProduct, config.retryDelay, task)
                                 }
                             });
                     } else {
-                        log('Out of price range...', 'log')
+                        log('Out of price range... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
                         return setTimeout(getProduct, config.retryDelay, task)
-                    }
-                    
-                    
+                    } 
                 }
             }
         } else {
-            log('Error getting product details... ' + '[' + r.statusCode + ']', 'error')
+            log('Error getting product details... ' + `[${tasks.indexOf(task)}]` + ' [' + r.statusCode + ']', 'error')
             console.log(r.body)
             return setTimeout(getProduct, config.retryDelay, task)
         }
     });
 }
 function login(loginTask) {
-    log('Submitting login information...', 'log')
+    log('Submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
     request({
         url: `https://stockx.com/api/login`,
         method: 'POST',
@@ -210,12 +213,12 @@ function login(loginTask) {
         proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
     }, function (e, r, b) {
         if (e) {
-            log('Request error submitting login information...', 'error')
+            log('Request error submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
             console.log(e)
             return setTimeout(login, config.retryDelay, loginTask)
         }
         if (r.statusCode === 200) {
-            log('Logged in...', 'success')
+            log('Logged in... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
             let jwt_token = r.headers['jwt-authorization']
             let grails_user_token = {
                 Customer: {  
@@ -273,14 +276,14 @@ function login(loginTask) {
             }
             checkout(checkoutTask)
         } else  {
-            log('Error submitting login information... ' + '[' + r.statusCode + ']', 'error')
+            log('Error submitting login information... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
             console.log(r.body)
             return setTimeout(login, config.retryDelay, loginTask)
         }
     });
 }
 function checkout(checkoutTask) {
-    log('Attempting ATC...', 'log')
+    log('Attempting ATC... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
     for (let lowestAsk of checkoutTask.asks) {
         request({
             url: `https://gateway.stockx.com/api/v3/pricing/pricing?currency=USD`,
@@ -312,7 +315,7 @@ function checkout(checkoutTask) {
             proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
         }, function (e, r, b) {
             if (e) {
-                log('Request error adding to cart...', 'error')
+                log('Request error adding to cart... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
                 console.log(e)
                 return setTimeout(checkout, config.retryDelay, checkoutTask)
             }
@@ -348,20 +351,18 @@ function checkout(checkoutTask) {
                     json: true,
                     proxy: formatProxy(proxyList[Math.floor(Math.random() * proxyList.length)])
                 }, function (e, r, b) {
-                    console.log(r.statusCode)
-                    console.log(b)
                     if (e) {
-                        log('Request error checking out...', 'error')
+                        log('Request error checking out... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
                         console.log(e)
                         return setTimeout(checkout, config.retryDelay, checkoutTask)
                     }
                     if (r.statusCode === 400 && JSON.stringify(b.Error.description).includes('support@stockx.com')) {
-                        log('Your account is clipped...', 'error') // account banned/contact stockx for help
+                        log('Your account is clipped... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error') // account banned/contact stockx for help
                         console.log(b)
                     } 
                     if (r.statusCode === 200 && JSON.stringify(b.PortfolioItem.statusMessage).includes('Complete')) {
                         console.log(b)
-                        log('Checked out...', 'success')
+                        log(`Checked out: Size - ${checkoutTask.size}... ` + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
                         let orderNumber = b.PortfolioItem.orderNumber
                         let checkoutTime = (new Date().getTime() - checkoutTask.startTime)/1000
                         let webhookColor = '#00FF6D'
@@ -376,12 +377,13 @@ function checkout(checkoutTask) {
                             checkoutTime:checkoutTime,
                             checkoutStatus:checkoutStatus,
                             webhookColor:webhookColor,
-                            lowestAsk:lowestAsk
+                            lowestAsk:lowestAsk,
+                            size:checkoutTask.size
                         }
                         notify(notifyTask)
                     } else if (b.Error && JSON.stringify(b.Error.description).includes('declined')) {
                         console.log(b)
-                        log('Payment declined...', 'error')
+                        log('Payment declined... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
                         let orderNumber = 'Unavailable'
                         let checkoutTime = (new Date().getTime() - checkoutTask.startTime)/1000
                         let webhookColor = '#FE2929'
@@ -396,17 +398,18 @@ function checkout(checkoutTask) {
                             checkoutTime:checkoutTime,
                             checkoutStatus:checkoutStatus,
                             webhookColor:webhookColor,
-                            lowestAsk:lowestAsk
+                            lowestAsk:lowestAsk,
+                            size:checkoutTask.size
                         }
                         notify(notifyTask)
                     } else if (r.statusCode !== 400 && r.statusCode !== 200) {
-                        log('Error checking out... ' + '[' + r.statusCode + ']', 'error')
+                        log('Error checking out... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
                         console.log(r.body)
                         return setTimeout(checkout, config.retryDelay, checkoutTask)
                     }
                 });
             } else {
-                log('Error adding to cart... ' + '[' + r.statusCode + ']', 'error')
+                log('Error adding to cart... ' + `[${tasks.indexOf(task)}] [Size: ${size}]` + ' [' + r.statusCode + ']', 'error')
                 console.log(r.body)
                 return setTimeout(checkout, config.retryDelay, checkoutTask)
             }
@@ -414,7 +417,7 @@ function checkout(checkoutTask) {
     }
 }
 function notify(notifyTask) {
-    log('Sending webhook...', 'log')
+    log('Sending webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'log')
     const message = { 
         username: 'StockX Sniper',
         attachments: [
@@ -425,7 +428,7 @@ function notify(notifyTask) {
                 title_link: notifyTask.productLink,
                 fields: [
                 { title: 'Item', value: notifyTask.productName, short: true},
-                { title: 'Size', value: notifyTask.task.Size, short: true},
+                { title: 'Size', value: notifyTask.size, short: true},
                 { title: 'Price', value: '$' + notifyTask.lowestAsk, short: true},
                 { title: 'Profile', value: '||' + notifyTask.profile.profileName + '||', short: true},
                 { title: 'Order Number', value: '||' + notifyTask.orderNumber + '||', short: true},
@@ -445,11 +448,11 @@ function notify(notifyTask) {
         body: message
     }, function (e) {
         if (e) {
-            log('Request error sending webhook...', 'error')
+            log('Request error sending webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'error')
             console.log(e)
             return setTimeout(notify, config.retryDelay, notifyTask)
         }
-        log('Sent webhook...', 'success')
+        log('Sent webhook... ' + `[${tasks.indexOf(task)}] [Size: ${size}]`, 'success')
     });
 }
 main()
