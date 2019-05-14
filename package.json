@@ -3,5 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "author": "cactus jack <github@cactusjack.io>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "moment": "^2.24.0",
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
+  }
 }
